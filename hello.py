@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2019/6/28 2:37
+# @Author  : Li Fu
+
 from flask import Flask, render_template
 
 from flask_bootstrap import Bootstrap
