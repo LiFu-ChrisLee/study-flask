@@ -2,7 +2,7 @@
 # @Time    : 2019/6/28 2:37
 # @Author  : Li Fu
 
-from flask import Flask, render_template
+from flask import Flask, render_template, session, redirect, url_for
 
 from flask_bootstrap import Bootstrap
 
@@ -33,9 +33,9 @@ def index():
     name = None
     form = NameForm()
     if form.validate_on_submit():
-        name = form.name.data
-        form.name.data = ''
-    return render_template('index.html', name=name, form=form)
+        session['name'] = form.name.data
+        return redirect(url_for('index'))
+    return render_template('index.html', name=session.get('name'), form=form)
 
 
 @app.route('/user/<name>')
