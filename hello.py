@@ -4,7 +4,7 @@
 
 import os
 
-from flask import Flask, render_template, session, redirect, url_for, flash
+from flask import Flask, render_template, session, redirect, url_for
 
 from flask_bootstrap import Bootstrap
 
@@ -19,6 +19,8 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_migrate import Migrate, MigrateCommand
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -38,12 +40,10 @@ db = SQLAlchemy(app)
 
 manager = Manager(app)
 
-
-class NameForm(FlaskForm):
-    name = StringField('What is your name?', validators=[DataRequired()])
-    submit = SubmitField('Submit')
+migrate = Migrate(app, db)
 
 
+# db model
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -54,6 +54,7 @@ class Role(db.Model):
         return '<Role %r>' % self.name
 
 
+# db model
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -64,12 +65,18 @@ class User(db.Model):
         return '<User %r>' % self.username
 
 
+class NameForm(FlaskForm):
+    name = StringField('What is your name?', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
 # shell command
 def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role)
 
 
-manager.add_command("shell", Shell(make_context=make_shell_context))
+manager.add_command('shell', Shell(make_context=make_shell_context))
+manager.add_command('db', MigrateCommand)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -108,5 +115,5 @@ def internal_server_error(e):
 
 if __name__ == "__main__":
     # shell command
-    # manager.run()
-    app.run(debug=True)
+    manager.run()
+    # app.run(debug=True)
