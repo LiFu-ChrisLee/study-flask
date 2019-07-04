@@ -10,6 +10,8 @@ from flask_bootstrap import Bootstrap
 
 from flask_moment import Moment
 
+from flask_script import Shell, Manager
+
 from flask_wtf import FlaskForm
 
 from wtforms import StringField, SubmitField
@@ -17,7 +19,6 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 from flask_sqlalchemy import SQLAlchemy
-
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -34,6 +35,8 @@ bootstrap = Bootstrap(app)
 moment = Moment(app)
 
 db = SQLAlchemy(app)
+
+manager = Manager(app)
 
 
 class NameForm(FlaskForm):
@@ -59,6 +62,14 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User %r>' % self.username
+
+
+# shell command
+def make_shell_context():
+    return dict(app=app, db=db, User=User, Role=Role)
+
+
+manager.add_command("shell", Shell(make_context=make_shell_context))
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -96,4 +107,6 @@ def internal_server_error(e):
 
 
 if __name__ == "__main__":
+    # shell command
+    # manager.run()
     app.run(debug=True)
