@@ -26,6 +26,8 @@ from flask_migrate import Migrate, MigrateCommand
 
 from flask_mail import Mail, Message
 
+from threading import Thread
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
@@ -107,11 +109,27 @@ manager.add_command('db', MigrateCommand)
 
 # send mail
 def send_email(to, subject, template, **kwargs):
-    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject,
-                  sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])
+    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject, sender=app.config['FLASKY_MAIL_SENDER'],
+                  recipients=[to])
     msg.body = render_template(template + '.txt', **kwargs)
     msg.html = render_template(template + '.html', **kwargs)
     mail.send(msg)
+
+
+# async
+def send_async_email(flask_app, msg):
+    with flask_app.app_context():
+        mail.send(msg)
+
+
+def send_email_async(to, subject, template, **kwargs):
+    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject, sender=app.config['FLASKY_MAIL_SENDER'],
+                  recipients=[to])
+    msg.body = render_template(template + '.txt', **kwargs)
+    msg.html = render_template(template + '.html', **kwargs)
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()
+    return thr
 
 
 # routes
@@ -125,7 +143,7 @@ def index():
             db.session.add(input_user)
             session['known'] = False
             if app.config['FLASKY_ADMIN']:
-                send_email(app.config['FLASKY_ADMIN'], 'New User', 'mail/new_user', user=input_user)
+                send_email_async(app.config['FLASKY_ADMIN'], 'New User', 'mail/new_user', user=input_user)
         else:
             session['known'] = True
         session['name'] = form.name.data
