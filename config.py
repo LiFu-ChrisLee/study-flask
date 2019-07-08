@@ -19,6 +19,7 @@ class Config:
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
     FLASKY_MAIL_SENDER = 'Flasky Admin <%s>' % (env['FLASKY_ADMIN'])
     FLASKY_ADMIN = env['FLASKY_ADMIN']
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     @staticmethod
     def init_app(app):
