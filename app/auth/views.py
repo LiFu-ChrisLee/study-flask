@@ -7,7 +7,8 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from app.email import send_email
 from . import auth
-from .forms import LoginForm, RegistrationForm, ChangePasswordForm
+
+from .forms import LoginForm, RegistrationForm, ChangePasswordForm, ResetPasswordForm, ForgotPasswordForm
 from .. import db
 from ..models import User
 
@@ -101,3 +102,40 @@ def change_password():
         else:
             flash('Invalid password.')
     return render_template("auth/change_password.html", form=form)
+
+
+@auth.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    email = request.args.get('email')
+    user = User.query.filter_by(email=email).first()
+    form = ResetPasswordForm()
+    if user.confirm(token):
+        if form.validate_on_submit():
+            user.password = form.password.data
+            db.session.add(user)
+            db.session.commit()
+            flash('Reset password successfully.')
+            return redirect(url_for('main.index'))
+        else:
+            flash('You have confirmed. Please reset your password.')
+            return render_template('auth/reset_password.html', form=form)
+    else:
+        flash('The confirmation link is invalid or has expired.')
+        return redirect(url_for('main.index'))
+
+
+@auth.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            token = user.generate_confirmation_token()
+            send_email(user.email, 'Reset Your Password',
+                       'auth/email/forgot_password', user=user, token=token)
+            flash('An email with instructions to reset your password has been sent to you by email.')
+            return redirect(url_for('main.index'))
+        else:
+            flash('Your email is invalid, please check it.')
+            pass
+    return render_template('auth/forgot_password.html', form=form)
