@@ -60,6 +60,23 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
+    def generate_reset_token(self, expiration=3600):
+        s = TimedJSONWebSignatureSerializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'reset': self.id}).decode('ascii')
+
+    def confirm_reset_token(self, token):
+        s = TimedJSONWebSignatureSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except Exception as e:
+            print(e)
+            return False
+        if data.get('confirm') != self.id:
+            return False
+        self.confirmed = True
+        db.session.add(self)
+        return True
+
     def __repr__(self):
         return '<User %r>' % self.username
 
