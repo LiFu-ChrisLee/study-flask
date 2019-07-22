@@ -104,7 +104,7 @@ class User(UserMixin, db.Model):
         except Exception as e:
             print(e)
             return False
-        if data.get('confirm') != self.id:
+        if data.get('reset') != self.id:
             return False
         self.confirmed = True
         db.session.add(self)
